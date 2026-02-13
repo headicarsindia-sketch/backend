@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model registered_master {
+  abstract_submitted    Boolean                   @default(false)
+  affiliation           String?
+  amount                Decimal                   @db.Decimal(10, 2)
+  sub_category          String?                   @db.VarChar(150)   // <-- new field
+  category              String?                   @db.VarChar(150)
+  city                  String?                   @db.VarChar(100)
+  contact_no            String?                   @db.VarChar(20)
+  created_at            DateTime                  @default(now()) @db.Timestamptz(6)
+  delegate_type         String                    @db.VarChar(100)
+  email                 String                    @unique(map: "uq_registered_email") @db.VarChar(255)
+  first_name            String                    @db.VarChar(100)
+  gender                registered_master_gender?
+  last_name             String                    @db.VarChar(100)
+  payment_mode          String?
+  postal_code           String?                   @db.VarChar(20)
+  registration_fee_type String?                   @db.VarChar(255)
+  salutation            String?                   @db.VarChar(10)
+  transaction_date      DateTime?                 @db.Date
+  transaction_id        String                    @id @db.VarChar(100)
+  updated_at            DateTime                  @updatedAt @db.Timestamptz(6)
+  abstract_submission   abstract_submission?
+  awardNominations      award_nomination[]
+
+  @@index([email])
+  @@index([delegate_type])
+}
+
+model abstract_submission {
+  abstract_id       BigInt                        @id @default(autoincrement())
+  salutation        String                        @db.VarChar(10)
+  first_name        String                        @db.VarChar(100)
+  last_name         String                        @db.VarChar(100)
+  designation       String                        @db.VarChar(150)
+  abstract_title    String                        @db.VarChar(500)
+  abstract_category String?                       @db.VarChar(150)
+  keywords          String?                       @db.VarChar(500)
+  file_name         String                        @db.VarChar(255)
+  file_type         abstract_submission_file_type
+  file_size_kb      Int
+  abstract_file     Bytes
+  submission_date   DateTime                      @default(now()) @db.Timestamptz(6)
+  status            abstract_submission_status    @default(SUBMITTED)
+  remarks           String?
+  created_at        DateTime                      @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime                      @updatedAt @db.Timestamptz(6)
+  transaction_id    String                        @unique @db.VarChar(100)
+  registered_master registered_master             @relation(fields: [transaction_id], references: [transaction_id], onDelete: Cascade)
+
+  @@index([transaction_id])
+  @@index([status])
+  @@index([submission_date])
+  @@index([abstract_category])
+}
+
+model award_pillar {
+  id               BigInt             @id @default(autoincrement())
+  name             String             @db.VarChar(200)
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  categories       award_category[]
+  awardNominations award_nomination[]
+}
+
+model award_category {
+  id                 BigInt             @id @default(autoincrement())
+  pillar_id          BigInt
+  name               String             @db.VarChar(250)
+  description        String?
+  total_awards       Int
+  age_limit          Int?
+  gender_restriction String?
+  created_at         DateTime           @default(now()) @db.Timestamptz(6)
+  pillar             award_pillar       @relation(fields: [pillar_id], references: [id], onDelete: Cascade)
+  focus_areas        award_focus_area[]
+  nominations        award_nomination[]
+
+  @@index([pillar_id])
+}
+
+model award_focus_area {
+  id               BigInt             @id @default(autoincrement())
+  category_id      BigInt
+  name             String             @db.VarChar(200)
+  category         award_category     @relation(fields: [category_id], references: [id], onDelete: Cascade)
+  awardNominations award_nomination[]
+
+  @@index([category_id])
+}
+
+model award_nomination {
+  id                  BigInt             @id @default(autoincrement())
+  transaction_id      String             @db.VarChar(100)
+  category_id         BigInt
+  focus_area_id       BigInt?
+  nominee_name        String             @db.VarChar(200)
+  designation         String             @db.VarChar(150)
+  organisation        String             @db.VarChar(255)
+  aadhaar             String?            @db.VarChar(20)
+  pan                 String?            @db.VarChar(20)
+  dossier_file        Bytes
+  dossier_filename    String             @db.VarChar(255)
+  achievement_writeup String
+  status              nomination_status  @default(SUBMITTED)
+  created_at          DateTime           @default(now()) @db.Timestamptz(6)
+  award_pillarId      BigInt?
+  awardPillar         award_pillar?      @relation(fields: [award_pillarId], references: [id])
+  category            award_category     @relation(fields: [category_id], references: [id])
+  focus_area          award_focus_area?  @relation(fields: [focus_area_id], references: [id])
+  registered_master   registered_master  @relation(fields: [transaction_id], references: [transaction_id], onDelete: Cascade)
+  proof_links         award_proof_link[]
+
+  @@index([transaction_id])
+  @@index([category_id])
+}
+
+model award_proof_link {
+  id            BigInt           @id @default(autoincrement())
+  nomination_id BigInt
+  url           String           @db.VarChar(500)
+  nomination    award_nomination @relation(fields: [nomination_id], references: [id], onDelete: Cascade)
+}
+
+enum registered_master_gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum abstract_submission_file_type {
+  PDF
+  DOC
+  DOCX
+}
+
+enum abstract_submission_status {
+  SUBMITTED
+  UNDER_REVIEW
+  ACCEPTED
+  REJECTED
+  REVISION_REQUIRED
+}
+
+enum nomination_status {
+  SUBMITTED
+  UNDER_REVIEW
+  SHORTLISTED
+  REJECTED
+  AWARDED
+}
