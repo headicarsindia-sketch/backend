@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "../../../../../prisma/client";
 import { serializeBigInt } from "@/app/api/_utils/serializeBigInt";
 
-
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // ✅ must match Next.js type
 ) {
+  const { id } = await context.params; // ✅ await the promise
+
   const nomination = await prisma.award_nomination.findUnique({
-    where: { id: BigInt(params.id) },
+    where: { id: BigInt(id) },
     include: { proof_links: true }
   });
 
@@ -29,6 +30,6 @@ export async function GET(
 
   return NextResponse.json({
     ...serializeBigInt(rest),
-    dossier_download_url: `/api/award/nomination/${params.id}?download=true`
+    dossier_download_url: `/api/award/nomination/${id}?download=true`
   });
 }
