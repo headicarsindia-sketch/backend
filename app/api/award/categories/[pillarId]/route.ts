@@ -10,11 +10,8 @@ type CategoryResponse = {
   description: string | null;
 };
 
-export async function GET(
-  req: NextRequest,
-  context: { params: { pillarId: string } } // ✅ remove Promise<>
-) {
-  const { pillarId } = context.params; // 👈 just use directly
+export async function GET(req: NextRequest, context: { params: Record<string, string | string[]> }) {
+  const pillarId = context.params.pillarId as string;
 
   const headers = corsHeaders(req.headers.get("origin"));
 
