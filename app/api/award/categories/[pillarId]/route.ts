@@ -12,9 +12,9 @@ type CategoryResponse = {
 
 export async function GET(
   req: NextRequest,
-  context: { params: { pillarId: string } } // <-- here
+  context: { params: Promise<{ pillarId: string }> } // ✅ match Next.js type
 ) {
-  const { pillarId } = context.params;
+  const { pillarId } = await context.params; // ✅ await the promise
 
   const headers = corsHeaders(req.headers.get("origin"));
 
