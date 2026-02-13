@@ -15,35 +15,33 @@ export default function AllNominationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchNominations = async () => {
-     try {
-        const res = await fetch("/api/award/nominations", {
-          cache: "no-store",
-        });
+useEffect(() => {
+  // Typed fetch function for nominations
+  const fetchNominations = async (): Promise<Nomination[]> => {
+    const res = await fetch("/api/award/nominations", { cache: "no-store" });
 
-        if (!res.ok) {
-          throw new Error("Failed to fetch nominations");
-        }
+    if (!res.ok) {
+      throw new Error("Failed to fetch nominations");
+    }
 
-        const result = await res.json();
+    const data: Nomination[] = await res.json();
+    return data;
+  };
 
-        if (Array.isArray(result)) {
-          setData(result);
-        } else {
-          setData([]);
-        }
-      } catch (err: any) {
-        console.error(err);
-        setError("Unable to load nominations.");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const getData = async () => {
+    try {
+      const result = await fetchNominations();
+      setData(result); // Type-safe assignment
+    } catch (err: any) {
+      console.error(err);
+      setError("Unable to load nominations.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchNominations();
-  }, []);
-
+  getData();
+}, []);
   const handleDownload = (id: number) => {
      window.open(
       `/api/award/nomination/${id}?download=true`,
