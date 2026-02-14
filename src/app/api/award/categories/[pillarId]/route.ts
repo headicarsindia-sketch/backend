@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 // import { prisma } from "@/prisma/client";
 import { award_category } from "@prisma/client/edge";
 import { corsHeaders } from "../../../_utils/cors";
-import { prisma } from "../../../../../prisma/client";
+import { prisma } from "../../../../../../prisma/client";
+
 
 /* ✅ REQUIRED: preflight */
 export async function OPTIONS(req: Request) {
