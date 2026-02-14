@@ -3,6 +3,14 @@ import { corsHeaders } from "@/app/api/_utils/cors";
 import { prisma } from "@/prisma/client";
 import { award_category } from "@prisma/client/edge";
 
+/* ✅ REQUIRED: preflight */
+export async function OPTIONS(req: Request) {
+  return new Response(null, {
+    status: 204,
+    headers: corsHeaders(req.headers.get("origin")),
+  });
+}
+
 type CategoryResponse = {
   id: string;
   pillar_id: string;
@@ -12,10 +20,9 @@ type CategoryResponse = {
 
 export async function GET(
   req: NextRequest,
-  context: { params: Promise<{ pillarId: string }> } // ✅ match Next.js type
+  context: { params: Promise<{ pillarId: string }> }
 ) {
-  const { pillarId } = await context.params; // ✅ await the promise
-
+  const { pillarId } = await context.params;
   const headers = corsHeaders(req.headers.get("origin"));
 
   try {
@@ -30,12 +37,25 @@ export async function GET(
       description: cat.description,
     }));
 
-    return NextResponse.json(safe, { headers });
+    return new NextResponse(JSON.stringify(safe), {
+      headers: {
+        ...headers,
+        "Content-Type": "application/json"
+      }
+    });
+
   } catch (error) {
     console.error("Error fetching categories:", error);
-    return NextResponse.json(
-      { message: "Failed to fetch categories" },
-      { status: 500, headers }
+
+    return new NextResponse(
+      JSON.stringify({ message: "Failed to fetch categories" }),
+      {
+        status: 500,
+        headers: {
+          ...headers,
+          "Content-Type": "application/json"
+        }
+      }
     );
   }
 }

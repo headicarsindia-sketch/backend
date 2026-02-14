@@ -1,22 +1,22 @@
 import type { CorsHeaders } from "./headers";
 
-const allowedOrigins = [
-  "http://localhost:5173", // your frontend dev port
-  "https://backend-git-main-icars-projects-11a778f7.vercel.app", // production frontend
-  "https://www.iitr.ac.in" // any other allowed origin
-];
+const allowedOrigins = new Set([
+  "http://localhost:5173",
+  "https://www.iitr.ac.in",
+  "https://backend-git-main-icars-projects-11a778f7.vercel.app"
+]);
 
 export function corsHeaders(origin: string | null): CorsHeaders {
-  let allowedOrigin = "*";
-
-  if (origin && allowedOrigins.some(o => origin.startsWith(o))) {
-    allowedOrigin = origin;
-  }
+  const allowedOrigin =
+    origin && allowedOrigins.has(origin)
+      ? origin
+      : "https://www.iitr.ac.in";
 
   return {
     "Access-Control-Allow-Origin": allowedOrigin,
-    "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Allow-Credentials": "true"
+    "Access-Control-Allow-Credentials": "true",
+    "Vary": "Origin"
   };
 }

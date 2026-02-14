@@ -3,7 +3,13 @@ import { corsHeaders } from "../../_utils/cors";
 import { prisma } from "../../../../prisma/client";
 import { serializeBigInt } from "../../_utils/serializeBigInt";
 
-
+/* ✅ REQUIRED: preflight */
+export async function OPTIONS(req: Request) {
+  return new Response(null, {
+    status: 204,
+    headers: corsHeaders(req.headers.get("origin")),
+  });
+}
 
 export async function POST(req: NextRequest) {
   const headers = corsHeaders(req.headers.get("origin"));
@@ -13,11 +19,17 @@ export async function POST(req: NextRequest) {
 
     const file = form.get("dossier_file") as File;
     if (!file) {
-      return NextResponse.json({ message: "Dossier file required" }, { status: 400, headers });
+      return new NextResponse(
+        JSON.stringify({ message: "Dossier file required" }),
+        { status: 400, headers: { ...headers, "Content-Type": "application/json" } }
+      );
     }
 
     if (file.size > 2 * 1024 * 1024) {
-      return NextResponse.json({ message: "Max file size 2MB" }, { status: 400, headers });
+      return new NextResponse(
+        JSON.stringify({ message: "Max file size 2MB" }),
+        { status: 400, headers: { ...headers, "Content-Type": "application/json" } }
+      );
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -25,6 +37,7 @@ export async function POST(req: NextRequest) {
     const transaction_id = form.get("transaction_id") as string;
     const award_pillarId = BigInt(form.get("award_pillarId") as string);
     const category_id = BigInt(form.get("category_id") as string);
+
     const focus_area_id = form.get("focus_area_id")
       ? BigInt(form.get("focus_area_id") as string)
       : undefined;
@@ -36,7 +49,10 @@ export async function POST(req: NextRequest) {
     });
 
     if (!registration) {
-      return NextResponse.json({ message: "Invalid transaction ID" }, { status: 400, headers });
+      return new NextResponse(
+        JSON.stringify({ message: "Invalid transaction ID" }),
+        { status: 400, headers: { ...headers, "Content-Type": "application/json" } }
+      );
     }
 
     const nomination = await prisma.award_nomination.create({
@@ -60,11 +76,15 @@ export async function POST(req: NextRequest) {
       include: { proof_links: true }
     });
 
-    return NextResponse.json(serializeBigInt(nomination), { status: 201, headers });
+    return new NextResponse(
+      JSON.stringify(serializeBigInt(nomination)),
+      { status: 201, headers: { ...headers, "Content-Type": "application/json" } }
+    );
+
   } catch (err: any) {
-    return NextResponse.json(
-      { message: "Server error", error: err.message },
-      { status: 500, headers }
+    return new NextResponse(
+      JSON.stringify({ message: "Server error", error: err.message }),
+      { status: 500, headers: { ...headers, "Content-Type": "application/json" } }
     );
   }
 }
