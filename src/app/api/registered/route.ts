@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/prisma/client";
-import { serializeBigInt } from "@/app/api/_utils/serializeBigInt";
-import { corsHeaders } from "@/app/api/_utils/cors";
+import { corsHeaders } from "../_utils/cors";
+import { prisma } from "../../../prisma/client";
+import { serializeBigInt } from "../_utils/serializeBigInt";
+
 
 export async function GET(req: NextRequest) {
   const headers = corsHeaders(req.headers.get("origin"));
