@@ -12,39 +12,39 @@ export async function GET(
     const resolvedParams = await params;
     const transaction_id = resolvedParams.id;
 
-    // Fetch the metadata and the binary content (abstract_file)
+    // Fetch the metadata and the binary content (upload_abstract)
     const abstract = await prisma.abstract_submission.findUnique({
-      where: { transaction_id },
+      where: { registration_id : transaction_id },
       select: { 
-        file_name: true, 
-        file_type: true,
-        abstract_file: true 
+        upload_abstract_name: true, 
+        upload_abstract_type: true,
+        upload_abstract: true 
       },
     });
 
-    if (!abstract || !abstract.abstract_file) {
+    if (!abstract || !abstract.upload_abstract) {
       return NextResponse.json(
         { error: "Abstract file not found in database" }, 
         { status: 404 }
       );
     }
 
-    // Map your file_type to a standard MIME type
+    // Map your upload_abstract_type to a standard MIME type
     const mimeMap: Record<string, string> = {
       PDF: "application/pdf",
       DOCX: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       DOC: "application/msword",
     };
 
-    const contentType = mimeMap[abstract.file_type.toUpperCase()] || "application/octet-stream";
+    const contentType = mimeMap[abstract.upload_abstract_type.toUpperCase()] || "application/octet-stream";
 
     // Create the response using the Uint8Array directly
-    return new NextResponse(abstract.abstract_file, {
+    return new NextResponse(abstract.upload_abstract, {
       status: 200,
       headers: {
         "Content-Type": contentType,
-        "Content-Disposition": `attachment; filename="${encodeURIComponent(abstract.file_name)}"`,
-        "Content-Length": abstract.abstract_file.length.toString(),
+        "Content-Disposition": `attachment; filename="${encodeURIComponent(abstract.upload_abstract_name)}"`,
+        "Content-Length": abstract.upload_abstract.length.toString(),
       },
     });
 

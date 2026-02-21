@@ -1,30 +1,32 @@
 // src/app/api/abstract/route.ts
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const abstracts = await prisma.abstract_submission.findMany({
-      orderBy: { created_at: "desc" },
+      orderBy: { submission_date: "desc" },
       select: {
-        transaction_id: true,
-        first_name: true,
-        last_name: true,
-        abstract_title: true,
-        abstract_category: true,
+        registration_id: true,
+        full_name_with_salutation: true,
+        delegate_category: true,
+        abstract_type: true,
         keywords: true,
-        file_name: true,
-        file_type: true,
-        file_size_kb: true,
-        created_at: true,
-       
+        upload_abstract_name: true,
+        upload_abstract_type: true,
+        upload_abstract_size_kb: true,
+        submission_date: true,
       },
     });
 
     return NextResponse.json({ abstracts }, { status: 200 });
   } catch (err) {
-    return NextResponse.json({ error: "Failed to fetch list" }, { status: 500 });
+    console.error("Fetch abstracts error:", err);
+    return NextResponse.json(
+      { error: "Failed to fetch abstracts" },
+      { status: 500 }
+    );
   }
 }

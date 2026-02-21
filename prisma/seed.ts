@@ -1,203 +1,49 @@
-import "dotenv/config";           // <-- Load .env first
-import { PrismaClient } from "@prisma/client";
-
-console.log("DATABASE_URL:", process.env.DATABASE_URL);  // <-- check if it's loaded
+import { PrismaClient, abstract_submission_file_type, abstract_submission_status } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-
 async function main() {
+  const transactionId = "1.14266E+11"; // keep exactly as provided
 
-  // Clear in dependency order
-  await prisma.award_proof_link.deleteMany();
-  await prisma.award_nomination.deleteMany();
-  await prisma.award_focus_area.deleteMany();
-  await prisma.award_category.deleteMany();
-  await prisma.award_pillar.deleteMany();
 
-  // ================= PILLARS =================
-
-  const industry = await prisma.award_pillar.create({
-    data: { name: "Industry Excellence Awards" }
-  });
-
-  const youth = await prisma.award_pillar.create({
-    data: { name: "Youth, Innovation & Vision 2047 Awards" }
-  });
-
-  const summit = await prisma.award_pillar.create({
-    data: { name: "Summit-Linked Performance Awards" }
-  });
-
-  // ================= CATEGORIES — PILLAR I =================
-
-  const resilience = await prisma.award_category.create({
+  // 2️⃣ create abstract_submission (child)
+  await prisma.abstract_submission.create({
     data: {
-      pillar_id: industry.id,
-      name: "Industry Resilience Leadership Awards",
-      total_awards: 3
+      registration_id: transactionId,
+      delegate_category: "Student Delegate (STD)",
+      sub_category: null,
+      full_name_with_salutation: "Col Vinay Singh",
+      gender: "MALE",
+      affiliation_organization: "Indian Army/Rashtriya Raksha University, Lucknow Campus",
+      designation_role: "Colonel/Student at RRU",
+      mobile_number: "7388973749",
+      city_country: "Lucknow, India",
+
+      abstract_type: "Research Paper",
+      keywords:
+        "Disaster Diplomacy; Disaster Risk Reduction (DRR); South Asia; Humanitarian Assistance and Disaster Relief (HADR); Soft Power; Climate Security.",
+      preferred_presentation: "Oral Presentation",
+      corresponding_author: "Vinay Singh",
+
+      upload_abstract_name: "gdrive_link.txt",
+      upload_abstract_type: abstract_submission_file_type.PDF, // change if enum differs
+      upload_abstract_size_kb: 0,
+      upload_abstract: Buffer.from(
+        "https://drive.google.com/open?id=1lzNPnCeS9uRUliDg5TSIgpyX3Nn1LJLv"
+      ),
+
+      status: abstract_submission_status.SUBMITTED
     }
   });
 
-  const novelResearch = await prisma.award_category.create({
-    data: {
-      pillar_id: industry.id,
-      name: "Novel Research Excellence Awards",
-      total_awards: 3
-    }
-  });
-
-  const youngResearchers = await prisma.award_category.create({
-    data: {
-      pillar_id: industry.id,
-      name: "Young Researchers Awards (Under 35)",
-      total_awards: 3,
-      age_limit: 35
-    }
-  });
-
-  const womenResearchers = await prisma.award_category.create({
-    data: {
-      pillar_id: industry.id,
-      name: "Women Researchers Awards",
-      total_awards: 3,
-      gender_restriction: "FEMALE"
-    }
-  });
-
-  const schoolCampus = await prisma.award_category.create({
-    data: {
-      pillar_id: industry.id,
-      name: "Sustainable School Campus Awards",
-      total_awards: 3
-    }
-  });
-
-  const grassroot = await prisma.award_category.create({
-    data: {
-      pillar_id: industry.id,
-      name: "Grassroot Leaders Awards",
-      total_awards: 3
-    }
-  });
-
-  const womenGrassroot = await prisma.award_category.create({
-    data: {
-      pillar_id: industry.id,
-      name: "Women Grassroot Leaders Awards",
-      total_awards: 2,
-      gender_restriction: "FEMALE"
-    }
-  });
-
-  const championInstitute = await prisma.award_category.create({
-    data: {
-      pillar_id: industry.id,
-      name: "Champion Institute Award",
-      total_awards: 1
-    }
-  });
-
-  // ================= FOCUS AREAS =================
-
-  const researchAreas = [
-    "Climate Research",
-    "DRR Research",
-    "Sustainability Research",
-    "Safety Research",
-    "Health Research"
-  ];
-
-  const resilienceAreas = [
-    "Sustainability",
-    "Disaster Risk Reduction (DRR)",
-    "Climate Resilience",
-    "Corporate Social Responsibility",
-    "Business Continuity",
-    "Investment in R&D",
-    "Innovation",
-    "Startups",
-    "Industrial Safety & NaTech DRR"
-  ];
-
-  const schoolAreas = [
-    "Disaster Preparedness",
-    "Climate Smart Campus",
-    "Green & Energy Efficient",
-    "Ecosystems & Nature Education"
-  ];
-
-  const grassrootAreas = [
-    "Community Mobilisation",
-    "Children’s Resilience",
-    "Traditional Wisdom"
-  ];
-
-  // Industry Resilience
-  for (const area of resilienceAreas) {
-    await prisma.award_focus_area.create({
-      data: { category_id: resilience.id, name: area }
-    });
-  }
-
-  // Research categories (B, C, D)
-  for (const area of researchAreas) {
-    await prisma.award_focus_area.create({ data: { category_id: novelResearch.id, name: area } });
-    await prisma.award_focus_area.create({ data: { category_id: youngResearchers.id, name: area } });
-    await prisma.award_focus_area.create({ data: { category_id: womenResearchers.id, name: area } });
-  }
-
-  // School campus
-  for (const area of schoolAreas) {
-    await prisma.award_focus_area.create({
-      data: { category_id: schoolCampus.id, name: area }
-    });
-  }
-
-  // Grassroot (F, G, H share same themes)
-  for (const area of grassrootAreas) {
-    await prisma.award_focus_area.create({ data: { category_id: grassroot.id, name: area } });
-    await prisma.award_focus_area.create({ data: { category_id: womenGrassroot.id, name: area } });
-    await prisma.award_focus_area.create({ data: { category_id: championInstitute.id, name: area } });
-  }
-
-  // ================= PILLAR II =================
-
-  const youthCategories = [
-    "Emerging Youth Policy Leader Award",
-    "Young Resilience Innovator Award",
-    "Young Champion for Nature-based Solutions",
-    "Young Champion for AI & Digital Innovation Award",
-    "Young Researcher for Emergency Preparedness Award"
-  ];
-
-  for (const name of youthCategories) {
-    await prisma.award_category.create({
-      data: { pillar_id: youth.id, name, total_awards: 1 }
-    });
-  }
-
-  // ================= PILLAR III =================
-
-  await prisma.award_category.create({
-    data: {
-      pillar_id: summit.id,
-      name: "Best Paper Award",
-      total_awards: 18
-    }
-  });
-
-  await prisma.award_category.create({
-    data: {
-      pillar_id: summit.id,
-      name: "Best Budding Quest Champion Award",
-      total_awards: 2
-    }
-  });
-
-  console.log("✅ Awards data seeded exactly from document");
+  console.log("✅ Seed data inserted");
 }
 
 main()
-  .catch(console.error)
-  .finally(() => prisma.$disconnect());
+  .catch(e => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
