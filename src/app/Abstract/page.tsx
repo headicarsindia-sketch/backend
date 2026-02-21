@@ -1,17 +1,17 @@
+
 "use client";
 import { useEffect, useState } from "react";
 
 interface Abstract {
-  transaction_id: string;
-  first_name: string;
-  last_name: string;
-  abstract_title: string;
-  abstract_category: string;
+  registration_id: string;
+  full_name_with_salutation: string;
+  abstract_type: string;
+  delegate_category: string;
   keywords: string;
-  file_name: string;
-  file_type: string;
-  file_size_kb: number;
-  created_at: string;
+  upload_abstract_name: string;
+  upload_abstract_type: string;
+  upload_abstract_size_kb: number;
+  submission_date: string;
 }
 
 export default function AbstractList() {
@@ -37,25 +37,31 @@ export default function AbstractList() {
     <div className="space-y-4">
       {abstracts.map((a) => (
         <div
-          key={a.transaction_id}
+          key={a.registration_id}
           className="border p-4 rounded flex justify-between items-start"
         >
           <div>
             <p>
-              <strong>{a.first_name} {a.last_name}</strong> ({a.transaction_id})
+              <strong>{a.full_name_with_salutation}</strong> ({a.registration_id})
             </p>
-            <p><strong>Title:</strong> {a.abstract_title}</p>
-            <p><strong>Category:</strong> {a.abstract_category}</p>
+
+            <p><strong>Type:</strong> {a.abstract_type}</p>
+            <p><strong>Category:</strong> {a.delegate_category}</p>
             <p><strong>Keywords:</strong> {a.keywords}</p>
+
             <p>
-              <strong>File:</strong> {a.file_name} ({a.file_type}, {a.file_size_kb} KB)
+              <strong>File:</strong> {a.upload_abstract_name} ({a.upload_abstract_type}, {a.upload_abstract_size_kb} KB)
             </p>
-            <p><strong>Submitted:</strong> {new Date(a.created_at).toLocaleString()}</p>
+
+            <p>
+              <strong>Submitted:</strong>{" "}
+              {new Date(a.submission_date).toLocaleString()}
+            </p>
           </div>
 
           <div className="ml-4">
             <a
-              href={`/api/abstract/${a.transaction_id}`}
+              href={`/api/abstract/${a.registration_id}`}
               className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
             >
               Download
