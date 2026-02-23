@@ -58,14 +58,14 @@ export default function RootLayout({
               </a>
 
               <a
-                href="/Abstract"
+                href="/abstract"
                 className="block px-3 py-2 rounded hover:bg-gray-100 text-black"
               >
                Abstracts Submission </a>
-               <a href="/submit_abstract"
+               {/* <a href="/submit_abstract"
                   className="block px-3 py-2 rounded hover:bg-gray-100 text-black">
                     submit_abstract
-                  </a>
+                  </a> */}
 
             </nav>
           </aside>
