@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
 
     const requiredFields = [
       "registration_id",
+      "email", // ✅ ADDED
       "delegate_category",
       "sub_category",
       "full_name_with_salutation",
@@ -46,6 +47,39 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const registration_id = formData.get("registration_id")!.toString().trim();
+    const email = formData.get("email")!.toString().trim().toLowerCase();
+
+    /* ---------------- VALIDATE REGISTRATION + EMAIL ---------------- */
+
+    const registration = await prisma.registered_master.findUnique({
+      where: { transaction_id: registration_id },
+      select: { email: true, abstract_submitted: true },
+    });
+
+    if (!registration) {
+      return NextResponse.json(
+        { error: "Invalid Registration ID." },
+        { status: 400, headers }
+      );
+    }
+
+    if (registration.email.toLowerCase() !== email) {
+      return NextResponse.json(
+        { error: "Email does not match registered email." },
+        { status: 400, headers }
+      );
+    }
+
+    if (registration.abstract_submitted) {
+      return NextResponse.json(
+        { error: "Abstract already submitted for this Registration ID." },
+        { status: 409, headers }
+      );
+    }
+
+    /* ---------------- FILE VALIDATION ---------------- */
+
     const file = formData.get("abstract_file") as File | null;
     if (!file) {
       return NextResponse.json(
@@ -53,8 +87,6 @@ export async function POST(req: NextRequest) {
         { status: 400, headers }
       );
     }
-
-    /* ---------------- FILE VALIDATION ---------------- */
 
     const fileName = file.name.toUpperCase();
     let fileTypeEnum: "PDF" | "DOC" | "DOCX";
@@ -75,7 +107,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const maxFileSize = 2 * 1024 * 1024; // 2MB
+    const maxFileSize = 2 * 1024 * 1024;
     if (file.size > maxFileSize) {
       return NextResponse.json(
         { error: "File too large. Maximum 2MB allowed." },
@@ -85,39 +117,46 @@ export async function POST(req: NextRequest) {
 
     const arrayBuffer = await file.arrayBuffer();
 
-    /* ---------------- PREPARE DATA ---------------- */
-
-    const submissionData = {
-      registration_id: formData.get("registration_id")!.toString().trim(),
-      delegate_category: formData.get("delegate_category")!.toString(),
-      sub_category: formData.get("sub_category")!.toString(),
-      full_name_with_salutation:
-        formData.get("full_name_with_salutation")!.toString(),
-      gender: formData.get("gender")!.toString(),
-      affiliation_organization:
-        formData.get("affiliation_organization")!.toString(),
-      designation_role: formData.get("designation_role")!.toString(),
-      mobile_number: formData.get("mobile_number")!.toString(),
-      city_country: formData.get("city_country")!.toString(),
-      abstract_type: formData.get("abstract_type")!.toString(),
-      keywords: formData.get("keywords")!.toString(),
-      preferred_presentation:
-        formData.get("preferred_presentation")!.toString(),
-      corresponding_author:
-        formData.get("corresponding_author")!.toString(),
-
-      upload_abstract_name: file.name,
-      upload_abstract_type: fileTypeEnum,
-      upload_abstract_size_kb: Math.round(file.size / 1024),
-      upload_abstract: Buffer.from(arrayBuffer),
-    };
-
     /* ---------------- SAFE TRANSACTION ---------------- */
 
     const saved = await prisma.$transaction(async (tx) => {
-      return await tx.abstract_submission.create({
-        data: submissionData,
+      const created = await tx.abstract_submission.create({
+        data: {
+          registration_id,
+          email, // ✅ SAVE USER EMAIL (validated)
+
+          delegate_category: formData.get("delegate_category")!.toString(),
+          sub_category: formData.get("sub_category")!.toString(),
+          full_name_with_salutation:
+            formData.get("full_name_with_salutation")!.toString(),
+          gender: formData.get("gender")!.toString(),
+          affiliation_organization:
+            formData.get("affiliation_organization")!.toString(),
+          designation_role:
+            formData.get("designation_role")!.toString(),
+          mobile_number: formData.get("mobile_number")!.toString(),
+          city_country: formData.get("city_country")!.toString(),
+          abstract_type: formData.get("abstract_type")!.toString(),
+          keywords: formData.get("keywords")!.toString(),
+          preferred_presentation:
+            formData.get("preferred_presentation")!.toString(),
+          corresponding_author:
+            formData.get("corresponding_author")!.toString(),
+
+          upload_abstract_name: file.name,
+          upload_abstract_type: fileTypeEnum,
+          upload_abstract_size_kb: Math.round(file.size / 1024),
+          upload_abstract: Buffer.from(arrayBuffer),
+        },
       });
+
+      // ✅ Mark abstract_submitted = true
+      await tx.registered_master.update({
+        where: { transaction_id: registration_id },
+        data: { abstract_submitted: true },
+      });
+
+      return created;
     });
 
     return NextResponse.json(
@@ -129,8 +168,6 @@ export async function POST(req: NextRequest) {
     );
   } catch (err: any) {
     console.error("Submission error:", err);
-
-    /* ---------------- DB / TRANSACTION ERROR HANDLING ---------------- */
 
     if (err.code === "P2002") {
       return NextResponse.json(

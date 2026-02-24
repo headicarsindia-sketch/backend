@@ -8,9 +8,10 @@ interface Delegate {
   fullName: string;
   designationDept: string;
   category: string;
+  subcategory: string;   // ✅ ADD THIS
   email: string;
   mobile: string;
-  abstractLink?: string; // optional
+  abstractLink?: string;
 }
 
 interface GroupFormData {
@@ -62,6 +63,7 @@ function buildDelegateHTML(delegates: Delegate[]): string {
           <td>${escapeHTML(d.fullName)}</td>
           <td>${escapeHTML(d.designationDept)}</td>
           <td>${escapeHTML(d.category)}</td>
+          <td>${escapeHTML(d.subcategory)}</td>   <!-- ✅ NEW -->
           <td>${escapeHTML(d.email)}</td>
           <td>${escapeHTML(d.mobile)}</td>
           <td>${abstractCell}</td>
@@ -148,6 +150,7 @@ export async function POST(req: NextRequest) {
             <th>Name</th>
             <th>Designation</th>
             <th>Category</th>
+            <th>Sub Category</th> <!-- ✅ NEW -->
             <th>Email</th>
             <th>Mobile</th>
             <th>Abstract</th>

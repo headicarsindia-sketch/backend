@@ -14,6 +14,7 @@ export async function GET() {
         delegate_category: true,
         abstract_type: true,
         keywords: true,
+        email:true,   
         upload_abstract_name: true,
         upload_abstract_type: true,
         upload_abstract_size_kb: true,
