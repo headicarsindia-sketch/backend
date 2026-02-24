@@ -36,33 +36,33 @@ model registered_master {
 }
 
 model abstract_submission {
-  abstract_id                BigInt   @id @default(autoincrement())
-  registration_id String @unique @map("transaction_id") @db.VarChar(100)
-  delegate_category          String?  @db.VarChar(150)
-  sub_category               String?  @db.VarChar(150)
-  full_name_with_salutation  String   @db.VarChar(150)
-  gender                     String?  @db.VarChar(20)
-  affiliation_organization   String?  @db.VarChar(255)
-  designation_role           String?  @db.VarChar(150)
-  mobile_number              String?  @db.VarChar(20)
-  city_country               String?  @db.VarChar(150)
-  
-  abstract_type              String?  @db.VarChar(150)
-  keywords                   String?  @db.VarChar(500)
-  preferred_presentation     String?  @db.VarChar(100)
-  corresponding_author       String?  @db.VarChar(150)
+  abstract_id               BigInt  @id @default(autoincrement())
+  registration_id           String  @unique @map("transaction_id") @db.VarChar(100)
+  delegate_category         String? @db.VarChar(150)
+  sub_category              String? @db.VarChar(150)
+  full_name_with_salutation String  @db.VarChar(150)
+  gender                    String? @db.VarChar(20)
+  affiliation_organization  String? @db.VarChar(255)
+  designation_role          String? @db.VarChar(150)
+  mobile_number             String? @db.VarChar(20)
+  city_country              String? @db.VarChar(150)
+  email                     String  @db.VarChar(255)
+  abstract_type             String? @db.VarChar(150)
+  keywords                  String? @db.VarChar(500)
+  preferred_presentation    String? @db.VarChar(100)
+  corresponding_author      String? @db.VarChar(150)
 
-  upload_abstract_name       String   @db.VarChar(255)
-  upload_abstract_type       abstract_submission_file_type
-  upload_abstract_size_kb    Int
-  upload_abstract            Bytes
+  upload_abstract_name    String                        @db.VarChar(255)
+  upload_abstract_type    abstract_submission_file_type
+  upload_abstract_size_kb Int
+  upload_abstract         Bytes
 
-  submission_date            DateTime @default(now()) @db.Timestamptz(6)
-  status                     abstract_submission_status @default(SUBMITTED)
-  remarks                    String?
+  submission_date DateTime                   @default(now()) @db.Timestamptz(6)
+  status          abstract_submission_status @default(SUBMITTED)
+  remarks         String?
 
-  created_at                 DateTime @default(now()) @db.Timestamptz(6)
-  updated_at                 DateTime @updatedAt @db.Timestamptz(6)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
 
   registered_master registered_master @relation(fields: [registration_id], references: [transaction_id], onDelete: Cascade)
 
@@ -70,8 +70,9 @@ model abstract_submission {
   @@index([status])
   @@index([submission_date])
   @@index([abstract_type])
+  @@index([email])
 }
-  
+
 model award_pillar {
   id               BigInt             @id @default(autoincrement())
   name             String             @db.VarChar(200)
