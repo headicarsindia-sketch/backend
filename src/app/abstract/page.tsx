@@ -10,7 +10,6 @@ interface Abstract {
   keywords: string;
   upload_abstract_name: string;
   upload_abstract_type: string;
-  upload_abstract_size_kb: number;
   submission_date: string;
 }
 
@@ -50,7 +49,7 @@ export default function AbstractList() {
             <p><strong>Keywords:</strong> {a.keywords}</p>
 
             <p>
-              <strong>File:</strong> {a.upload_abstract_name} ({a.upload_abstract_type}, {a.upload_abstract_size_kb} KB)
+              <strong>File:</strong> {a.upload_abstract_name} ({a.upload_abstract_type})
             </p>
 
             <p>
