@@ -14,12 +14,31 @@ export async function GET(req: NextRequest) {
       include: {
         abstract_submission: true,
         awardNominations: {
-          include: { proof_links: true }
-        }
-      }
+          include: { proof_links: true },
+        },
+      },
     });
 
-    const formatted = users.map((user: any) => serializeBigInt(user));
+    const formatted = users.map((user: any) => {
+      const serialized = serializeBigInt(user);
+
+      return {
+        ...serialized,
+        amount: serialized.amount?.toString(),
+
+        transaction_date: user.transaction_date
+          ? user.transaction_date.toISOString().split("T")[0]
+          : null,
+
+        created_at: user.created_at
+          ? user.created_at.toISOString()
+          : null,
+
+        updated_at: user.updated_at
+          ? user.updated_at.toISOString()
+          : null,
+      };
+    });
 
     return NextResponse.json(formatted, { headers });
   } catch (error: any) {
@@ -28,7 +47,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         message: "Server error while fetching registered users.",
-        error: error.message
+        error: error.message,
       },
       { status: 500, headers }
     );
