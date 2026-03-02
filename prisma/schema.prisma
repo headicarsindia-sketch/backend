@@ -26,7 +26,7 @@ model registered_master {
   salutation            String?                   @db.VarChar(10)
   transaction_date      DateTime?                 @db.Date
   transaction_id        String                    @id @db.VarChar(100)
-  updated_at            DateTime                  @updatedAt @db.Timestamptz(6)
+  updated_at            DateTime                  @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @updatedAt @db.Timestamptz(6)
   sub_category          String?                   @db.VarChar(150)
   abstract_submission   abstract_submission?
   awardNominations      award_nomination[]
@@ -36,35 +36,31 @@ model registered_master {
 }
 
 model abstract_submission {
-  abstract_id               BigInt  @id @default(autoincrement())
-  registration_id           String  @unique @map("transaction_id") @db.VarChar(100)
-  delegate_category         String? @db.VarChar(150)
-  sub_category              String? @db.VarChar(150)
-  full_name_with_salutation String  @db.VarChar(150)
-  gender                    String? @db.VarChar(20)
-  affiliation_organization  String? @db.VarChar(255)
-  designation_role          String? @db.VarChar(150)
-  mobile_number             String? @db.VarChar(20)
-  city_country              String? @db.VarChar(150)
-  email                     String  @db.VarChar(255)
-  abstract_type             String? @db.VarChar(150)
-  keywords                  String? @db.VarChar(500)
-  preferred_presentation    String? @db.VarChar(100)
-  corresponding_author      String? @db.VarChar(150)
-
-  upload_abstract_name    String                        @db.VarChar(255)
-  upload_abstract_type    abstract_submission_file_type
-  upload_abstract_size_kb Int
-  upload_abstract         Bytes
-
-  submission_date DateTime                   @default(now()) @db.Timestamptz(6)
-  status          abstract_submission_status @default(SUBMITTED)
-  remarks         String?
-
-  created_at DateTime @default(now()) @db.Timestamptz(6)
-  updated_at DateTime @updatedAt @db.Timestamptz(6)
-
-  registered_master registered_master @relation(fields: [registration_id], references: [transaction_id], onDelete: Cascade)
+  abstract_id               BigInt                        @id @default(autoincrement())
+  keywords                  String?                       @db.VarChar(500)
+  submission_date           DateTime                      @default(now()) @db.Timestamptz(6)
+  status                    abstract_submission_status    @default(SUBMITTED)
+  remarks                   String?
+  created_at                DateTime                      @default(now()) @db.Timestamptz(6)
+  updated_at                DateTime                      @default(now()) @updatedAt @db.Timestamptz(6)
+  registration_id           String                        @unique @map("transaction_id") @db.VarChar(100)
+  abstract_type             String?                       @db.VarChar(150)
+  affiliation_organization  String?                       @db.VarChar(255)
+  city_country              String?                       @db.VarChar(150)
+  corresponding_author      String?                       @db.VarChar(150)
+  delegate_category         String?                       @db.VarChar(150)
+  designation_role          String?                       @db.VarChar(150)
+  full_name_with_salutation String                        @db.VarChar(150)
+  gender                    String?                       @db.VarChar(20)
+  mobile_number             String?                       @db.VarChar(20)
+  preferred_presentation    String?                       @db.VarChar(100)
+  sub_category              String?                       @db.VarChar(150)
+  upload_abstract           Bytes
+  upload_abstract_name      String                        @default("Abstract") @db.VarChar(255)
+  upload_abstract_size_kb   Int                           @default(0)
+  upload_abstract_type      abstract_submission_file_type @default(PDF)
+  email                     String                        @db.VarChar(255)
+  registered_master         registered_master             @relation(fields: [registration_id], references: [transaction_id], onDelete: Cascade)
 
   @@index([registration_id])
   @@index([status])
