@@ -71,12 +71,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (registration.abstract_submitted) {
-      return NextResponse.json(
-        { error: "Abstract already submitted for this Registration ID." },
-        { status: 409, headers }
-      );
-    }
+    // if (registration.abstract_submitted) {
+    //   return NextResponse.json(
+    //     { error: "Abstract already submitted for this Registration ID." },
+    //     { status: 409, headers }
+    //   );
+    // }
 
     /* ---------------- FILE VALIDATION ---------------- */
 
