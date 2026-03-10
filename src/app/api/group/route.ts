@@ -95,22 +95,83 @@ export async function POST(req: NextRequest) {
 
     /* ===== BASIC VALIDATION ===== */
 
-    if (!data.instituteName || !data.email || !data.delegates?.length) {
+    if (!data.instituteName?.trim()) {
       return NextResponse.json(
-        { message: "Invalid form submission" },
+        { message: "Institute name is required" },
         { status: 400, headers: corsHeaders(origin) }
       );
     }
 
-    /* ===== ABSTRACT VALIDATION PER DELEGATE ===== */
+    if (!data.email?.trim()) {
+      return NextResponse.json(
+        { message: "Representative email is required" },
+        { status: 400, headers: corsHeaders(origin) }
+      );
+    }
 
-    for (const delegate of data.delegates) {
+    if (!Array.isArray(data.delegates) || data.delegates.length === 0) {
+      return NextResponse.json(
+        { message: "At least one delegate must be added" },
+        { status: 400, headers: corsHeaders(origin) }
+      );
+    }
+
+    /* ===== DELEGATE VALIDATION ===== */
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const mobileRegex = /^[0-9]{8,15}$/;
+
+    for (const [index, delegate] of data.delegates.entries()) {
+      if (!delegate.fullName?.trim()) {
+        return NextResponse.json(
+          { message: `Delegate ${index + 1}: Full name is required` },
+          { status: 400, headers: corsHeaders(origin) }
+        );
+      }
+
+      if (!delegate.designationDept?.trim()) {
+        return NextResponse.json(
+          { message: `Delegate ${index + 1}: Designation/Department required` },
+          { status: 400, headers: corsHeaders(origin) }
+        );
+      }
+
+      if (!delegate.category?.trim()) {
+        return NextResponse.json(
+          { message: `Delegate ${index + 1}: Category required` },
+          { status: 400, headers: corsHeaders(origin) }
+        );
+      }
+
+      if (!delegate.subcategory?.trim()) {
+        return NextResponse.json(
+          { message: `Delegate ${index + 1}: Subcategory required` },
+          { status: 400, headers: corsHeaders(origin) }
+        );
+      }
+
+      if (!emailRegex.test(delegate.email)) {
+        return NextResponse.json(
+          { message: `Delegate ${index + 1}: Invalid email address` },
+          { status: 400, headers: corsHeaders(origin) }
+        );
+      }
+
+      if (!mobileRegex.test(delegate.mobile)) {
+        return NextResponse.json(
+          { message: `Delegate ${index + 1}: Invalid mobile number` },
+          { status: 400, headers: corsHeaders(origin) }
+        );
+      }
+
       if (
         delegate.abstractLink &&
         !isValidGoogleLink(delegate.abstractLink)
       ) {
         return NextResponse.json(
-          { message: `Invalid abstract link for ${delegate.fullName}` },
+          {
+            message: `Delegate ${index + 1}: Abstract must be a Google Drive/Docs link`,
+          },
           { status: 400, headers: corsHeaders(origin) }
         );
       }
@@ -131,6 +192,8 @@ export async function POST(req: NextRequest) {
     const secretariatHTML = `
       <h2>New Group Discount Registration – RESSummit 2047</h2>
 
+      <p><strong>Total Delegates:</strong> ${data.delegates.length}</p>
+
       <h3>SECTION A: Institutional Details</h3>
       <p><strong>Institute Name:</strong> ${escapeHTML(data.instituteName)}</p>
       <p><strong>Delegate Type:</strong> ${escapeHTML(data.type)}</p>
@@ -143,6 +206,7 @@ export async function POST(req: NextRequest) {
       <p><strong>Mobile:</strong> ${escapeHTML(data.mobile)}</p>
 
       <h3>SECTION C: Delegate Roster</h3>
+
       <table border="1" cellpadding="8" cellspacing="0">
         <thead>
           <tr>
@@ -150,12 +214,13 @@ export async function POST(req: NextRequest) {
             <th>Name</th>
             <th>Designation</th>
             <th>Category</th>
-            <th>Sub Category</th> <!-- ✅ NEW -->
+            <th>Sub Category</th>
             <th>Email</th>
             <th>Mobile</th>
             <th>Abstract</th>
           </tr>
         </thead>
+
         <tbody>
           ${delegateTableRows}
         </tbody>
@@ -165,42 +230,44 @@ export async function POST(req: NextRequest) {
     /* ===== SEND EMAIL TO SECRETARIAT ===== */
 
     await transporter.sendMail({
-  from: `"RESSummit 2047" <${process.env.EMAIL_USER}>`,
-  to: "santosh.wr@sric.iitr.ac.in",
-  cc: [
-    "anilg.icars@wr.iitr.ac.in",
-    "vibhanshuverma.dpsr@gmail.com"
-  ],
-  subject: "New Group Discount Registration – RESSummit 2047",
-  html: secretariatHTML,
-});
+      from: `"RESSummit 2047" <${process.env.EMAIL_USER}>`,
+      to: "santosh.wr@sric.iitr.ac.in",
+      cc: [
+        "anilg.icars@wr.iitr.ac.in",
+        "vibhanshuverma.dpsr@gmail.com"
+      ],
+      subject: "New Group Discount Registration – RESSummit 2047",
+      html: secretariatHTML,
+    });
 
     /* ===== CONFIRMATION EMAIL ===== */
 
     await transporter.sendMail({
-  from: `"RESSummit 2047" <${process.env.EMAIL_USER}>`,
-  to: data.email,
-  subject: "Group Registration Received – RESSummit 2047",
-  html: `
-    <p>Dear ${escapeHTML(data.representativeName)},</p>
+      from: `"RESSummit 2047" <${process.env.EMAIL_USER}>`,
+      to: data.email,
+      subject: "Group Registration Received – RESSummit 2047",
+      html: `
+        <p>Dear ${escapeHTML(data.representativeName)},</p>
 
-    <p>Your <strong>Group Registration Proforma</strong> has been received successfully.</p>
+        <p>Your <strong>Group Registration Proforma</strong> has been received successfully.</p>
 
-    <p>Please check your registered email address for the payment details and further instructions.</p>
+        <p><strong>Total Delegates Submitted:</strong> ${data.delegates.length}</p>
 
-    <p>If abstracts were submitted, kindly ensure they are publicly accessible and under 2MB in size.</p>
+        <p>Please check your registered email address for the payment details and further instructions.</p>
 
-    <br/>
+        <p>If abstracts were submitted, kindly ensure they are publicly accessible.</p>
 
-    <p>Regards,<br/>RESSummit 2047 Secretariat</p>
-  `,
-});
+        <br/>
 
+        <p>Regards,<br/>RESSummit 2047 Secretariat</p>
+      `,
+    });
 
     return NextResponse.json(
-      { message: "Emails sent successfully" },
+      { message: "Group registration submitted successfully" },
       { status: 200, headers: corsHeaders(origin) }
     );
+
   } catch (error) {
     console.error("Email Error:", error);
 
